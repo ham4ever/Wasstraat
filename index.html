@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="light">
+<head>
+<link rel="manifest" href="manifest.webmanifest">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Wasstraat" />
+<title>Wasstraat Tracker</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ─────────────────────────────────────────── */
+:root {
+  --c-bg:        #f5f5f5;
+  --c-surface:   #ffffff;
+  --c-surface2:  #fafafa;
+  --c-border:    rgba(0,0,0,0.08);
+  --c-text:      #0a0a0a;
+  --c-muted:     #777;
+  --c-accent:    #0ea5e9;
+  --c-accent2:   #7c3aed;
+  --c-success:   #16a34a;
+  --c-warn:      #d97706;
+  --c-danger:    #dc2626;
+  --c-pill-bg:   rgba(14,165,233,0.10);
+
+  --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px;
+  --font: 'Satoshi', system-ui, sans-serif;
+  --ease: cubic-bezier(.16,1,.3,1);
+  --nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+[data-theme="dark"] {
+  --c-bg:      #0a0a0a;
+  --c-surface: #141414;
+  --c-surface2:#1a1a1a;
+  --c-border:  rgba(255,255,255,0.08);
+  --c-text:    #f0f0f0;
+  --c-muted:   #888;
+  --c-accent:  #38bdf8;
+  --c-accent2: #a78bfa;
+  --c-pill-bg: rgba(56,189,248,0.10);
+}
+
+*,::before,::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:none;scroll-behavior:smooth;overscroll-behavior:none}
+body{font-family:var(--font);font-size:15px;background:var(--c-bg);color:var(--c-text);
+  min-height:100dvh;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none;touch-action:manipulation}
+input{background:var(--c-surface2);border:1px solid var(--c-border);border-radius:var(--r-md)}
+:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px}
+img,svg{display:block}
+
+/* ─── APP SHELL ──────────────────────────────────────── */
+.app{display:flex;flex-direction:column;min-height:100dvh;padding-bottom:calc(var(--nav-h) + var(--safe-bottom))}
+
+/* ─── TOP HEADER ─────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--c-surface);
+  border-bottom:1px solid var(--c-border);
+  padding:0 var(--s4);
+  height:58px;
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.topbar-logo{display:flex;align-items:center;gap:var(--s3)}
+.logo-icon{width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  display:grid;place-items:center;color:#fff;flex-shrink:0}
+.logo-icon svg{width:18px;height:18px}
+.logo-text{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.logo-sub{font-size:11px;color:var(--c-muted);margin-top:-2px}
+.topbar-actions{display:flex;align-items:center;gap:var(--s2)}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  color:var(--c-muted);background:var(--c-surface2);border:1px solid var(--c-border);
+  transition:all 200ms var(--ease)}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn svg{width:18px;height:18px}
+
+/* ─── BADGE PILL ─────────────────────────────────────── */
+.badge-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;
+  border-radius:99px;font-size:11px;font-weight:800;
+  background:var(--c-accent);color:#fff;
+  position:absolute;top:-4px;right:-4px;
+}
+
+/* ─── BOTTOM NAV ─────────────────────────────────────── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:var(--c-surface);
+  border-top:1px solid var(--c-border);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  height:calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;font-size:10px;font-weight:500;color:var(--c-muted);
+  transition:color 180ms var(--ease);}
+.nav-icon-wrapper{position:relative;display:flex}
+.nav-item svg{width:22px;height:22px;transition:transform 180ms var(--ease)}
+.nav-item.active{color:var(--c-accent)}
+.nav-item.active svg{transform:scale(1.1)}
+.nav-item span.nav-label{font-size:10px;font-weight:600}
+
+/* ─── MAIN CONTENT ───────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column}
+.view{display:none;flex-direction:column;gap:0;flex:1}
+.view.active{display:flex}
+.scroll-region{flex:1;overflow-y:auto;padding:var(--s4);display:flex;flex-direction:column;gap:var(--s4)}
+
+/* ─── HERO CARD ──────────────────────────────────────── */
+.hero-card{
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  border-radius:var(--r-xl);padding:var(--s5);color:#fff;position:relative;overflow:hidden
+}
+.hero-title{font-size:13px;font-weight:600;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--s2)}
+.hero-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+.hero-kpi{background:rgba(255,255,255,.18);border-radius:var(--r-sm);padding:var(--s2) var(--s3);text-align:center}
+.hero-kpi-val{font-size:24px;font-weight:800;display:block;font-variant-numeric:tabular-nums}
+.hero-kpi-lbl{font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.04em}
+
+/* ─── SECTION HEADER ─────────────────────────────────── */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s2)}
+.section-hd h2{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.section-hd .count{font-size:12px;font-weight:600;color:var(--c-muted);
+  background:var(--c-surface);border:1px solid var(--c-border);
+  padding:2px 8px;border-radius:99px}
+
+/* ─── FLOOR GROUP ────────────────────────────────────── */
+.floor-group{display:flex;flex-direction:column;gap:var(--s2)}
+.floor-header{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:8px var(--s3);border-radius:var(--r-md);
+  background:var(--c-surface);border:1px solid var(--c-border);
+}
+.floor-badge{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));
+  color:#fff;font-size:15px;font-weight:800;
+  display:grid;place-items:center;flex-shrink:0;
+}
+.floor-header-info{flex:1}
+.floor-header-title{font-size:14px;font-weight:700}
+.floor-header-sub{font-size:11px;color:var(--c-muted);margin-top:1px}
+
+/* ─── ROOM ROW ───────────────────────────────────────── */
+.room-row{
+  background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r-md);
+  display:flex;align-items:center;gap:var(--s3);padding:10px var(--s3);
+  transition:border-color 200ms var(--ease);
+}
+.room-row.received{
+  border-color:color-mix(in srgb,var(--c-accent) 40%,transparent);
+  background:color-mix(in srgb,var(--c-accent) 5%,var(--c-surface));
+}
+.room-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+  background:var(--c-border);border:2px solid var(--c-border);
+  transition:all 200ms var(--ease);
+}
+.room-row.received .room-dot{background:var(--c-accent);border-color:var(--c-accent);}
+.room-row-info{flex:1;min-width:0}
+.room-row-code{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.room-row-area{font-size:11px;color:var(--c-muted);margin-top:1px}
+.room-row-sterile{
+  font-size:11px;color:var(--c-muted);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.recv-btn{
+  flex-shrink:0;
+  padding:7px 14px;border-radius:99px;font-size:12px;font-weight:700;
+  border:1.5px solid var(--c-border);background:var(--c-surface2);color:var(--c-muted);
+  transition:all 180ms var(--ease);touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  white-space:nowrap;
+}
+.recv-btn:active{transform:scale(.93)}
+.room-row.received .recv-btn{
+  background:var(--c-accent);border-color:var(--c-accent);color:#fff;
+}
+
+/* ─── OVERVIEW CARD ──────────────────────────────────── */
+.overzicht-card{
+  border-radius:var(--r-lg);border:1px solid var(--c-border);
+  background:var(--c-surface);overflow:hidden;
+  transition:opacity 300ms var(--ease);
+}
+.overzicht-card.verwerkt{opacity:.5;}
+.overzicht-card-body{display:flex;align-items:flex-start;gap:var(--s3);padding:12px var(--s4);}
+.ov-badge{
+  min-width:52px;height:52px;border-radius:var(--r-sm);
+  background:var(--c-pill-bg);color:var(--c-accent);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:16px;font-weight:800;
+}
+.ov-info{flex:1;min-width:0}
+.ov-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
+.ov-area{font-size:12px;color:var(--c-muted);}
+.ov-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
+.ov-sterile-rule{font-size:13px;font-weight:600;line-height:1.5;}
+.ov-note{font-size:12px;color:var(--c-muted);margin-top:5px;line-height:1.5;
+  padding-top:5px;border-top:1px solid var(--c-border);}
+.overzicht-card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px var(--s4);border-top:1px solid var(--c-border);
+  background:var(--c-surface2);
+}
+.verwerkt-btn{
+  padding:7px 16px;border-radius:99px;font-size:12px;font-weight:700;
+  border:1.5px solid var(--c-border);background:var(--c-surface);color:var(--c-muted);
+  transition:all 180ms var(--ease);touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.verwerkt-btn:active{transform:scale(.93)}
+.verwerkt-btn.done{background:var(--c-success);border-color:var(--c-success);color:#fff;}
+.verwerkt-time{font-size:11px;color:var(--c-muted);}
+
+/* ─── SEARCH ─────────────────────────────────────────── */
+.search-box{
+  display:flex;align-items:center;gap:var(--s2);
+  background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r-lg);
+  padding:0 var(--s3);
+}
+.search-box svg{color:var(--c-muted);flex-shrink:0;width:18px;height:18px}
+.search-box input{flex:1;padding:13px var(--s2);background:none;border:none;outline:none;font-size:15px}
+.search-box button{color:var(--c-muted);padding:var(--s2)}
+
+/* ─── UTILITY ────────────────────────────────────────── */
+.empty-state{text-align:center;padding:var(--s6);color:var(--c-muted);font-size:14px}
+.empty-state svg{width:40px;height:40px;margin:0 auto var(--s3);opacity:.3}
+.action-btn{
+  padding:12px 20px;border-radius:99px;font-size:14px;font-weight:700;
+  background:var(--c-accent);color:#fff;transition:all 180ms var(--ease);
+  border:none;
+}
+.action-btn.danger{background:var(--c-danger)}
+.action-btn.danger.armed{background:var(--c-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--c-accent) 35%,transparent)}
+.action-btn:active{transform:scale(.95)}
+
+/* ─── TOAST ──────────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:calc(var(--nav-h) + 14px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);
+  background:#0a0a0a;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;
+  white-space:nowrap;opacity:0;transition:all 300ms var(--ease);z-index:200;pointer-events:none
+}
+[data-theme="dark"] .toast{background:#f0f0f0;color:#0a0a0a}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a5 5 0 0 1 5 5v3H7V7a5 5 0 0 1 5-5z"/>
+          <path d="M3 10h18l-1.5 9a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 10z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">Wasstraat</div>
+        <div class="logo-sub">CGSA ontvangst</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" aria-label="Thema wisselen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── VIEW: OVERZICHT ──────────────────────────────── -->
+    <div class="view active" id="view-overzicht">
+      <div class="scroll-region">
+        <!-- Hero stats -->
+        <div class="hero-card">
+          <div class="hero-title">Vandaag ontvangen</div>
+          <div class="hero-kpis">
+            <div class="hero-kpi"><span class="hero-kpi-val" id="hkpiOntvangen">0</span><span class="hero-kpi-lbl">Ontvangen</span></div>
+            <div class="hero-kpi"><span class="hero-kpi-val" id="hkpiVerwerkt">0</span><span class="hero-kpi-lbl">Verwerkt</span></div>
+            <div class="hero-kpi"><span class="hero-kpi-val" id="hkpiOpen">0</span><span class="hero-kpi-lbl">Open</span></div>
+          </div>
+        </div>
+
+        <!-- Received rooms list -->
+        <div class="section-hd">
+          <h2>Te verwerken</h2>
+          <div class="count" id="ovCount">0</div>
+        </div>
+        <div id="overzichtList"></div>
+
+        <!-- Reset button -->
+                <!-- Actions -->
+        <div style="display:flex;gap:var(--s2);margin-top:var(--s2);">
+          <button class="action-btn" id="archiveBtn" style="flex:1;">Ronde archiveren</button>
+          <button class="action-btn danger" id="clearBtn" style="flex:1;">Dag afsluiten</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: KAMERS ─────────────────────────────────── -->
+    <div class="view" id="view-kamers">
+      <div class="scroll-region">
+        <div class="section-hd">
+          <h2>Alle kamers</h2>
+          <div class="count" id="kamersCount">0</div>
+        </div>
+        <div id="kamersList"></div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: ZOEKEN ─────────────────────────────────── -->
+    <div class="view" id="view-zoeken">
+      <div class="scroll-region">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="tel" inputmode="numeric" id="searchInput" placeholder="Zoek kamernummer&hellip; bijv. 5149" autocomplete="off" />
+          <button id="clearSearch">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: ARCHIEF ────────────────────────────────── -->
+    <div class="view" id="view-archief">
+      <div class="scroll-region">
+        <div class="section-hd">
+          <h2>Archief (Vandaag)</h2>
+          <div class="count" id="archiefCount">0</div>
+        </div>
+        <div id="archiefList"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" role="navigation" aria-label="Hoofdnavigatie">
+    <button class="nav-item active" data-view="overzicht">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span class="badge-pill" id="navBadge" style="display:none">0</span>
+      </div>
+      <span class="nav-label">Overzicht</span>
+    </button>
+    <button class="nav-item" data-view="kamers">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+      </div>
+      <span class="nav-label">Kamers</span>
+    </button>
+    <button class="nav-item" data-view="zoeken">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <span class="nav-label">Zoeken</span>
+    </button>
+    <button class="nav-item" data-view="archief">
+      <div class="nav-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      </div>
+      <span class="nav-label">Archief</span>
+    </button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── DATA ──────────────────────────────────────────────── */
+const routeData = {
+'0-5':{ floors:['0','5'], rooms:[
+  {code:'0.307',area:'0 Zuid',sterile:'Niet steriel',note:''},
+  {code:'0.337',area:'0 Zuid',sterile:'Niet steriel',note:''},
+  {code:'0.207',area:'0 Midden',sterile:'Alles steriel',note:''},
+  {code:'5.127',area:'5 Noord',sterile:'Niet steriel',note:''},
+  {code:'5.132',area:'5 Noord',sterile:'Niets steriel (Maarten)',note:'Klein bakje: aluminiumfolie maar niet steriel. Flessen wel steriel.'},
+  {code:'5.140',area:'5 Noord',sterile:'Alleen flessen steriel',note:''},
+  {code:'5.147',area:'5 Noord',sterile:'Alleen flessen steriel (5147F + 5147B)',note:'5147F en 5147B: alleen flessen steriel.'},
+  {code:'5.149',area:'5 Noord',sterile:'Alles steriel',note:'Flessen met gele MW-sticker &rarr; vullen met MilliQ + steriliseren bij vloeistoffen.'},
+  {code:'5.207',area:'5 Midden',sterile:'Glaswerk steriel (indien aanwezig)',note:'Als er glaswerk is &rarr; steriel.'},
+  {code:'5.213',area:'5 Midden',sterile:'Niets steriel',note:''},
+  {code:'5.237',area:'5 Midden',sterile:'Flessen steriel; glaswerk alleen in aluminiumfolie (niet steriel)',note:'Ronde plastic fles ook steriel in autoclaaf.'},
+  {code:'5.249',area:'5 Midden',sterile:'Niets steriel',note:''},
+  {code:'5.301',area:'5 Zuid',sterile:'Alles steriel',note:'Plastic bakjes: in groen zakje sealen + autoclaaf.'},
+  {code:'5.307',area:'5 Zuid',sterile:'Alles steriel',note:''},
+  {code:'5.313',area:'5 Zuid',sterile:'Niets steriel',note:''},
+  {code:'5.325',area:'5 Zuid',sterile:'Niets steriel',note:''},
+  {code:'5.337',area:'5 Zuid',sterile:'Niets steriel',note:''},
+  {code:'5.345',area:'5 Zuid',sterile:'Alleen flessen steriel',note:''}
+]},
+'2-4':{ floors:['2','4'], rooms:[
+  {code:'2.207',area:'2 Midden',sterile:'Alles steriel',note:''},
+  {code:'2.219',area:'2 Midden',sterile:'Niets steriel',note:''},
+  {code:'2.313',area:'2 Zuid',sterile:'Alles steriel',note:''},
+  {code:'2.323',area:'2 Zuid',sterile:'Niets steriel',note:''},
+  {code:'2.331',area:'2 Zuid',sterile:'Niets steriel',note:''},
+  {code:'2.347',area:'2 Zuid',sterile:'Niet steriel',note:''},
+  {code:'2.353',area:'2 Zuid',sterile:'Niet steriel',note:''},
+  {code:'2.359',area:'2 Zuid',sterile:'Niets steriel',note:''},
+  {code:'4.230',area:'4 Midden',sterile:'Niets steriel',note:''},
+  {code:'4.231',area:'4 Midden',sterile:'Alleen flessen met rode dop (plastic rondje erin) steriel',note:'Alleen flessen met rode dop + plastic rondje &rarr; steriel.'},
+  {code:'4.237',area:'4 Midden',sterile:'Niets steriel',note:''},
+  {code:'4.305',area:'4 Zuid',sterile:'Alles steriel',note:''},
+  {code:'4.307',area:'4 Zuid',sterile:'Alles steriel',note:''},
+  {code:'4.313',area:'4 Zuid',sterile:'Alles steriel',note:''},
+  {code:'4.319',area:'4 Zuid',sterile:'Alles steriel',note:''},
+  {code:'4.323',area:'4 Zuid',sterile:'Alles steriel',note:''},
+  {code:'4.329',area:'4 Zuid',sterile:'Alles steriel',note:''},
+  {code:'4.149',area:'4 Noord',sterile:'Niets steriel',note:''},
+  {code:'4.159',area:'4 Noord',sterile:'Flessen steriel; gewoon glaswerk niet',note:''},
+  {code:'4.161',area:'4 Noord',sterile:'Niets steriel',note:''},
+  {code:'4.141',area:'4 Noord',sterile:'Niets steriel',note:''}
+]},
+'3-1':{ floors:['3','1'], rooms:[
+  {code:'1.303',area:'1 Zuid',sterile:'Alles steriel',note:''},
+  {code:'1.305',area:'1 Zuid',sterile:'Niets steriel',note:''},
+  {code:'1.307',area:'1 Zuid',sterile:'Niets steriel',note:''},
+  {code:'1.317',area:'1 Zuid',sterile:'Niets steriel',note:''},
+  {code:'1.321',area:'1 Zuid',sterile:'Alles steriel',note:'Plastic erlenmeyers: 4&times; aluminiumfolie + groene sticker &rarr; autoclaaf. Grote flessen: stoof met dubbel aluminiumfolie. Doppen apart in twee verschillende zakjes &rarr; autoclaaf.'},
+  {code:'1.323',area:'1 Zuid',sterile:'Alles steriel',note:''},
+  {code:'1.325',area:'1 Zuid',sterile:'Niets steriel',note:''},
+  {code:'3.305',area:'3 Zuid',sterile:'Alles steriel',note:''},
+  {code:'3.309',area:'3 Zuid',sterile:'Alles steriel',note:''},
+  {code:'3.311',area:'3 Zuid',sterile:'Alles steriel',note:''},
+  {code:'3.319',area:'3 Zuid',sterile:'Alleen flessen steriel',note:''},
+  {code:'3.207',area:'3 Midden',sterile:'Zakjes en bakjes steriel',note:'Bijna altijd alleen zakjes en bakjes &rarr; moeten steriel.'},
+  {code:'3.201',area:'3 Midden',sterile:'Zakjes en bakjes steriel',note:'Bijna altijd alleen zakjes en bakjes &rarr; moeten steriel.'},
+  {code:'3.159',area:'3 Noord',sterile:'Alleen zakjes terugbrengen (worden gebracht)',note:''},
+  {code:'3.143',area:'3 Noord',sterile:'Niets steriel',note:''},
+  {code:'3.137',area:'3 Noord',sterile:'Alles steriel',note:''},
+  {code:'3.135',area:'3 Noord',sterile:'Alles steriel',note:''},
+  {code:'3.117',area:'3 Noord',sterile:'Alles steriel',note:'Flessen met MQ-sticker (groen gestreept) &rarr; vullen met MilliQ + steriliseren.'},
+  {code:'1.119',area:'1 Noord',sterile:'Niets steriel',note:''},
+  {code:'1.132',area:'1 Noord',sterile:'Alleen driehoekige flessen steriel',note:'Driehoekige fles (dop heeft 3 puntjes) &rarr; steriel. De rest niets.'},
+  {code:'1.137',area:'1 Noord',sterile:'Niet steriel',note:''}
+]}
+};
+
+/* ── FLATTEN + SORT ALL ROOMS ──────────────────────────── */
+const allRooms = (function(){
+  var seen = {}, out = [];
+  Object.values(routeData).forEach(function(rd){
+    rd.rooms.forEach(function(r){
+      if(!seen[r.code]){ seen[r.code]=true; out.push(r); }
+    });
+  });
+  out.sort(function(a,b){
+    var pa=a.code.split('.'), pb=b.code.split('.');
+    var fa=parseInt(pa[0],10), fb=parseInt(pb[0],10);
+    if(fa!==fb) return fa-fb;
+    return parseInt(pa[1],10)-parseInt(pb[1],10);
+  });
+  return out;
+})();
+
+function fmtCode(code){ return code ? code.replace(/\./g,'') : code; }
+
+/* ── STATE ─────────────────────────────────────────────── */
+var state = {
+  roomStates: {},
+  archive: [],
+  activeView: 'overzicht',
+  theme: 'light'
+};
+
+function loadState(){
+  try{
+    var s = localStorage.getItem('wasstraat1');
+    if(s){ var p=JSON.parse(s); if(p.roomStates) state.roomStates=p.roomStates; if(p.theme) state.theme=p.theme; if(p.activeView) state.activeView=p.activeView; if(p.archive) state.archive=p.archive; }
+  }catch(e){}
+}
+function saveState(){
+  try{ localStorage.setItem('wasstraat1', JSON.stringify({roomStates:state.roomStates, theme:state.theme, activeView:state.activeView, archive:state.archive||[]})); }catch(e){}
+}
+function getRoomState(code){
+  if(!state.roomStates[code]) state.roomStates[code]={received:false,processed:false,processedAt:'',receivedAt:''};
+  return state.roomStates[code];
+}
+function fmtDateTime(iso){
+  if(!iso) return '';
+  var d = new Date(iso);
+  var date = d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit'});
+  var time = d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  return time + ' ' + date;
+}
+function peekRoomState(code){
+  var s=state.roomStates[code];
+  if(!s) return {received:false,processed:false,processedAt:''};
+  return s;
+}
+
+/* ── HELPERS ────────────────────────────────────────────── */
+function isNietSteriel(sterielText){
+  return /^(niet|niets|nee|no\b)/i.test((sterielText||'').trim());
+}
+function haptic(kind){
+  try{ if(!navigator.vibrate) return; if(kind==='on') navigator.vibrate(12); else navigator.vibrate([8,12,8]); }catch(e){}
+}
+
+/* ── TOAST ─────────────────────────────────────────────── */
+var toastTimer;
+function showToast(msg){
+  var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('show'); },2200);
+}
+
+/* ── NAVIGATION ─────────────────────────────────────────── */
+function switchView(viewId){
+  state.activeView=viewId; saveState();
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.getElementById('view-'+viewId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.view===viewId); });
+  if(viewId==='overzicht') renderOverzicht();
+  if(viewId==='kamers') renderKamers();
+  if(viewId==='zoeken') {
+    doSearch();
+    document.getElementById('searchInput').focus();
+  }
+  if(viewId==='archief') renderArchief();
+}
+document.querySelectorAll('.nav-item').forEach(function(btn){
+  btn.addEventListener('click', function(){ switchView(btn.dataset.view); });
+});
+
+/* ── THEME ──────────────────────────────────────────────── */
+document.getElementById('themeBtn').addEventListener('click', function(){
+  var root=document.documentElement;
+  root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+  state.theme=root.getAttribute('data-theme'); saveState();
+});
+
+/* ── RENDER KAMERS ──────────────────────────────────────── */
+function renderKamers(){
+  var list = document.getElementById('kamersList');
+  var received = allRooms.filter(function(r){ return peekRoomState(r.code).received; }).length;
+  document.getElementById('kamersCount').textContent = allRooms.length + ' kamers';
+
+  // Group by floor
+  var floors = [], floorMap = {};
+  allRooms.forEach(function(r){
+    var fl = r.code.split('.')[0];
+    if(!floorMap[fl]){ floorMap[fl]=[]; floors.push(fl); }
+    floorMap[fl].push(r);
+  });
+
+  list.innerHTML = floors.map(function(fl){
+    var rooms = floorMap[fl];
+    var flReceived = rooms.filter(function(r){ return peekRoomState(r.code).received; }).length;
+    var rows = rooms.map(function(r){
+      var s = peekRoomState(r.code);
+      var niet = isNietSteriel(r.sterile);
+      return '<div class="room-row'+(s.received?' received':'')+'" id="kr-'+r.code.replace(/\./g,'-')+'">'
+        + '<div class="room-dot"></div>'
+        + '<div class="room-row-info">'
+          + '<div class="room-row-code">'+fmtCode(r.code)+'</div>'
+          + '<div class="room-row-area">'+r.area+'</div>'
+          + '<div class="room-row-sterile" style="color:'+(niet?'var(--c-danger)':'var(--c-success)')+'">'+r.sterile+'</div>'
+        + '</div>'
+        + '<button class="recv-btn" data-code="'+r.code+'">'+(s.received?'&#10003; Ontvangen':'Ontvangen')+'</button>'
+        + '</div>';
+    }).join('');
+    return '<div class="floor-group">'
+      + '<div class="floor-header">'
+        + '<div class="floor-badge">'+fl+'</div>'
+        + '<div class="floor-header-info">'
+          + '<div class="floor-header-title">Verdieping '+fl+'</div>'
+          + '<div class="floor-header-sub">'+flReceived+' / '+rooms.length+' ontvangen</div>'
+        + '</div>'
+      + '</div>'
+      + rows
+      + '</div>';
+  }).join('');
+
+  // Attach button listeners
+  list.querySelectorAll('.recv-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var code = btn.dataset.code;
+      var s = getRoomState(code);
+      s.received = !s.received;
+      if(s.received){ s.receivedAt = new Date().toISOString(); }
+      else { s.receivedAt = ''; s.processed = false; }
+      haptic(s.received ? 'on' : 'off');
+      saveState();
+      updateBadge();
+      // In-place DOM update for the row
+      var row = document.getElementById('kr-'+code.replace(/\./g,'-'));
+      if(row){
+        row.classList.toggle('received', s.received);
+        btn.innerHTML = s.received ? '&#10003; Ontvangen' : 'Ontvangen';
+      }
+      // Re-render floor sub counts
+      list.querySelectorAll('.floor-group').forEach(function(fg){
+        var badge = fg.querySelector('.floor-badge');
+        if(!badge) return;
+        var rows2 = Array.from(fg.querySelectorAll('.room-row'));
+        var recvCount = rows2.filter(function(r){ return r.classList.contains('received'); }).length;
+        var sub = fg.querySelector('.floor-header-sub');
+        if(sub) sub.textContent = recvCount+' / '+rows2.length+' ontvangen';
+      });
+      showToast(s.received ? fmtCode(code)+' ontvangen' : fmtCode(code)+' verwijderd');
+    });
+  });
+}
+
+/* ── RENDER OVERZICHT ───────────────────────────────────── */
+function renderOverzicht(){
+  var received = allRooms.filter(function(r){ return peekRoomState(r.code).received; });
+  // Sort by receivedAt ascending (oldest first = top of list)
+  received.sort(function(a,b){
+    var ta = peekRoomState(a.code).receivedAt || '';
+    var tb = peekRoomState(b.code).receivedAt || '';
+    if(!ta && !tb) return 0;
+    if(!ta) return -1;
+    if(!tb) return 1;
+    return ta < tb ? -1 : ta > tb ? 1 : 0;
+  });
+  var verwerkt = received.filter(function(r){ return peekRoomState(r.code).processed; }).length;
+  var open = received.length - verwerkt;
+
+  document.getElementById('hkpiOntvangen').textContent = received.length;
+  document.getElementById('hkpiVerwerkt').textContent = verwerkt;
+  document.getElementById('hkpiOpen').textContent = open;
+  document.getElementById('ovCount').textContent = received.length;
+
+  var list = document.getElementById('overzichtList');
+  if(!received.length){
+    list.innerHTML = '<div class="empty-state">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+      + 'Nog niets ontvangen. Ga naar Kamers om materialen te markeren.</div>';
+    return;
+  }
+
+  list.innerHTML = received.map(function(room){
+    var s = peekRoomState(room.code);
+    var niet = isNietSteriel(room.sterile);
+    var mainColor = niet ? 'var(--c-danger)' : 'var(--c-success)';
+    var cardBg    = 'color-mix(in srgb, ' + mainColor + ' 6%, var(--c-surface))';
+    var footerBg  = 'color-mix(in srgb, ' + mainColor + ' 12%, var(--c-surface))';
+    var badgeBg   = 'color-mix(in srgb, ' + mainColor + ' 15%, transparent)';
+    var borderCol = 'color-mix(in srgb, ' + mainColor + ' 30%, transparent)';
+    var tagLabel = niet ? 'Niet steriel' : 'Steriel';
+    var receivedHtml  = s.receivedAt  ? '<span style="width:65px;display:inline-block;">Ontvangen:</span><span>' + fmtDateTime(s.receivedAt) + '</span>' : '';
+    var processedHtml = s.processedAt ? '<span style="width:65px;display:inline-block;">Verwerkt:</span><span>' + fmtDateTime(s.processedAt) + '</span>' : '';
+    return '<div class="overzicht-card'+(s.processed?' verwerkt':'')+ '" id="ov-'+room.code.replace(/\./g,'-')+'" style="border:1px solid '+borderCol+'; border-left:5px solid '+mainColor+'; background: '+cardBg+';">'
+      + '<div class="overzicht-card-body">'
+        + '<div class="ov-badge" style="background:'+badgeBg+';color:'+mainColor+';">'+fmtCode(room.code)+'</div>'
+        + '<div class="ov-info">'
+          + '<div class="ov-meta">'
+            + '<span class="ov-area">'+room.area+'</span>'
+            + '<span class="ov-tag" style="background:'+badgeBg+';color:'+mainColor+';">'+tagLabel+'</span>'
+          + '</div>'
+          + '<div class="ov-sterile-rule">'+room.sterile+'</div>'
+          + (room.note && !niet ? '<div class="ov-note" style="border-top:1px solid '+borderCol+';">'+room.note+'</div>' : '')
+        + '</div>'
+      + '</div>'
+      + '<div class="overzicht-card-footer" style="background:'+footerBg+'; border-top:1px solid '+borderCol+';">'
+        + '<div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--c-muted);">'
+          + (receivedHtml ? '<div>'+receivedHtml+'</div>' : '')
+          + '<div class="verwerkt-time" style="display:'+(s.processedAt?'block':'none')+'">'+processedHtml+'</div>'
+        + '</div>'
+        + '<button class="verwerkt-btn'+(s.processed?' done':'')+ '" data-code="'+room.code+'">'+(s.processed?'&#10003; Verwerkt':'Verwerkt')+'</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Verwerkt button listeners
+  list.querySelectorAll('.verwerkt-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var code = btn.dataset.code;
+      var s = getRoomState(code);
+      s.processed = !s.processed;
+      s.processedAt = s.processed ? new Date().toISOString() : '';
+      haptic(s.processed ? 'on' : 'off');
+      saveState();
+      updateBadge();
+      // In-place update card
+      var card = document.getElementById('ov-'+code.replace(/\./g,'-'));
+      if(card){
+        card.classList.toggle('verwerkt', s.processed);
+        btn.innerHTML = s.processed ? '&#10003; Verwerkt' : 'Verwerkt';
+        btn.classList.toggle('done', s.processed);
+        var timeEl = card.querySelector('.verwerkt-time');
+        if(timeEl){
+          timeEl.innerHTML = s.processed && s.processedAt ? '<span style="width:65px;display:inline-block;">Verwerkt:</span><span>' + fmtDateTime(s.processedAt) + '</span>' : '';
+          timeEl.style.display = s.processed && s.processedAt ? 'block' : 'none';
+        }
+      }
+      // Update hero stats live
+      var recvList = allRooms.filter(function(r){ return peekRoomState(r.code).received; });
+      var vwkt = recvList.filter(function(r){ return peekRoomState(r.code).processed; }).length;
+      document.getElementById('hkpiVerwerkt').textContent = vwkt;
+      document.getElementById('hkpiOpen').textContent = recvList.length - vwkt;
+      showToast(s.processed ? fmtCode(code)+' verwerkt' : fmtCode(code)+' heropend');
+    });
+  });
+}
+
+/* ── BADGE ──────────────────────────────────────────────── */
+function updateBadge(){
+  var open = allRooms.filter(function(r){ var s=peekRoomState(r.code); return s.received && !s.processed; }).length;
+  var badge = document.getElementById('navBadge');
+  badge.textContent = open;
+  badge.style.display = open > 0 ? '' : 'none';
+}
+
+/* ── SEARCH ─────────────────────────────────────────────── */
+function doSearch(){
+  var term = document.getElementById('searchInput').value.trim().toLowerCase();
+  var c = document.getElementById('searchResults');
+  if(!term){
+    c.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Zoek een kamer op nummer of gebied.</div>';
+    return;
+  }
+  var found = allRooms.filter(function(r){
+    return fmtCode(r.code).toLowerCase().includes(term) || r.code.toLowerCase().includes(term) || r.area.toLowerCase().includes(term);
+  });
+  if(!found.length){ c.innerHTML='<div class="empty-state">Geen kamers gevonden voor "'+term+'".</div>'; return; }
+  c.innerHTML = found.map(function(room){
+    var s = peekRoomState(room.code);
+    var niet = isNietSteriel(room.sterile);
+    var tagBg    = niet ? 'color-mix(in srgb,var(--c-danger) 12%,transparent)' : 'color-mix(in srgb,var(--c-success) 12%,transparent)';
+    var tagColor = niet ? 'var(--c-danger)' : 'var(--c-success)';
+    return '<div style="background:var(--c-surface);border:1px solid var(--c-border);border-left:4px solid '+(niet?'var(--c-danger)':'var(--c-success)')+';border-radius:var(--r-lg);padding:var(--s4);margin-bottom:var(--s3);">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s2);">'
+        + '<span style="font-size:17px;font-weight:800;">'+fmtCode(room.code)+'</span>'
+        + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:'+tagBg+';color:'+tagColor+';">'+(niet?'Niet steriel':'Steriel')+'</span>'
+          + '<button style="padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid '+(s.received?'var(--c-accent)':'var(--c-border)')+';background:'+(s.received?'var(--c-accent)':'var(--c-surface2)')+';color:'+(s.received?'#fff':'var(--c-muted)')+';touch-action:manipulation;" data-search-code="'+room.code+'">'+(s.received?'&#10003; Ontvangen':'Ontvangen')+'</button>'
+        + '</div>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--c-muted);margin-bottom:4px;">'+room.area+'</div>'
+      + '<div style="font-size:13px;font-weight:600;">'+room.sterile+'</div>'
+      + (room.note && !niet ? '<div style="font-size:12px;color:var(--c-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--c-border);">'+room.note+'</div>' : '')
+      + '</div>';
+  }).join('');
+
+  c.querySelectorAll('[data-search-code]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      var code = btn.dataset.searchCode;
+      var s = getRoomState(code);
+      s.received = !s.received;
+      if(s.received){ s.receivedAt = new Date().toISOString(); }
+      else { s.receivedAt = ''; s.processed = false; }
+      haptic(s.received?'on':'off');
+      saveState(); updateBadge();
+      
+      // Update in-place so we don't destroy the DOM element that triggered the click
+      btn.innerHTML = s.received ? '&#10003; Ontvangen' : 'Ontvangen';
+      btn.style.background = s.received ? 'var(--c-accent)' : 'var(--c-surface2)';
+      btn.style.color = s.received ? '#fff' : 'var(--c-muted)';
+      btn.style.borderColor = s.received ? 'var(--c-accent)' : 'var(--c-border)';
+      
+      showToast(s.received ? fmtCode(code)+' ontvangen' : fmtCode(code)+' verwijderd');
+      document.getElementById('searchInput').focus();
+    });
+  });
+}
+document.getElementById('searchInput').addEventListener('input', doSearch);
+var clearBtn = document.getElementById('clearSearch');
+clearBtn.addEventListener('click', function(e){
+  e.preventDefault();
+  var inp = document.getElementById('searchInput');
+  inp.value = '';
+  doSearch();
+  inp.focus();
+});
+
+/* ── ARCHIEF ────────────────────────────────────────────── */
+function renderArchief(){
+  var list = document.getElementById('archiefList');
+  var arch = state.archive || [];
+  document.getElementById('archiefCount').textContent = arch.length;
+  if(!arch.length){
+    list.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>Geen verwerkte kamers gearchiveerd.</div>';
+    return;
+  }
+  // Sort newest first by archivedAt
+  var rev = arch.slice().sort(function(a,b){
+    var ta = a.archivedAt || '';
+    var tb = b.archivedAt || '';
+    if(!ta && !tb) return 0;
+    if(!ta) return 1;
+    if(!tb) return -1;
+    return ta > tb ? -1 : ta < tb ? 1 : 0;
+  });
+  list.innerHTML = rev.map(function(item){
+    var rows = '<div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--c-muted);margin-top:4px;">';
+    if(item.receivedAt)  rows += '<div><span style="width:65px;display:inline-block;">Ontvangen:</span><span>' + fmtDateTime(item.receivedAt)  + '</span></div>';
+    if(item.processedAt) rows += '<div><span style="width:65px;display:inline-block;">Verwerkt:</span><span>' + fmtDateTime(item.processedAt) + '</span></div>';
+    if(item.archivedAt)  rows += '<div><span style="width:65px;display:inline-block;">Archief:</span><span>' + fmtDateTime(item.archivedAt)  + '</span></div>';
+    rows += '</div>';
+    return '<div class="room-row" style="flex-direction:column;align-items:flex-start;opacity:0.9;margin-bottom:var(--s2);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;">'
+        + '<div class="room-row-code">'+fmtCode(item.code)+'</div>'
+        + '<div class="room-row-area">'+item.area+'</div>'
+      + '</div>'
+      + rows
+      + '</div>';
+  }).join('');
+}
+
+document.getElementById('archiveBtn').addEventListener('click', function(){
+  var toArchive = allRooms.filter(function(r){ return peekRoomState(r.code).processed; });
+  if(!toArchive.length){
+    showToast('Geen verwerkte kamers om te archiveren.');
+    return;
+  }
+  if(!state.archive) state.archive=[];
+  var nowMs = Date.now();
+  toArchive.forEach(function(r, i){
+    var s = getRoomState(r.code);
+    state.archive.push({
+      code: r.code,
+      area: r.area,
+      receivedAt:  s.receivedAt  || '',
+      processedAt: s.processedAt || '',
+      archivedAt:  new Date(nowMs + i).toISOString()
+    });
+    s.received = false;
+    s.processed = false;
+    s.processedAt = '';
+    s.receivedAt = '';
+  });
+  haptic('on');
+  saveState();
+  updateBadge();
+  renderOverzicht();
+  if(state.activeView==='archief') renderArchief();
+  showToast(toArchive.length + ' kamers gearchiveerd');
+});
+
+/* ── CLEAR / DAG AFSLUITEN ──────────────────────────────── */
+document.getElementById('clearBtn').addEventListener('click', function(){
+  if(this.dataset.armed==='1'){
+    this.dataset.armed='';
+    this.classList.remove('armed');
+    this.textContent='Dag afsluiten';
+    state.roomStates={}; state.archive=[];
+    saveState(); updateBadge(); renderOverzicht();
+    showToast('Dag afgesloten. Alles gewist.');
+    return;
+  }
+  this.dataset.armed='1';
+  this.classList.add('armed');
+  this.textContent='Nogmaals tikken om te wissen';
+  var btn=this;
+  setTimeout(function(){ if(btn.dataset.armed==='1'){ btn.dataset.armed=''; btn.classList.remove('armed'); btn.textContent='Dag afsluiten'; } },3000);
+});
+
+/* ── INIT ───────────────────────────────────────────────── */
+loadState();
+document.documentElement.setAttribute('data-theme', state.theme || 'light');
+updateBadge();
+if(state.activeView && state.activeView !== 'overzicht'){
+  switchView(state.activeView);
+} else {
+  renderOverzicht();
+}
+</script>
+</body>
+</html>
